@@ -2,12 +2,24 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <title>upld仮2 - プレビュー</title>
+<style>
+table tr td{
+    height:32px;
+}
+
+/* 投稿者隠しいらないなら消す */
+.tbl-author {
+    background-color: black;
+}
+
+.tbl-author:hover{
+    background-color: white;
+}
+</style>
 </head>
 <body>
 <p><?php
 setlocale(LC_CTYPE, 'C');
-ini_set("display_errors",On);
-error_reporting(E_ALL);
 
 $filenum=$_GET["filenum"];
 
@@ -23,10 +35,12 @@ for(;$i<sizeof($records);$i++){
 }
 
 $name=$records[$i][2];
+$author=$records[$i][3];
 
 $json=json_decode(file_get_contents("files\\{$records[$i][0]}.json"),true);
 
 echo "<h1>{$name}</h1>";
+echo "<p>投稿者: <span class='tbl-author'>{$author}</span></p>";
 echo "<audio id='play' src='files/{$filenum}.m4a' controls></audio>";
 echo "<div id='wave' style='background:url(\"files/{$filenum}.wf2.png\");width:800px;height:256px;border:solid 2px black'>";
 

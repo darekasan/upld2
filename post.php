@@ -44,6 +44,9 @@ if (is_uploaded_file($_FILES["upfile"]["tmp_name"])) {
     $fp = popen("C:\\apps\\ffprobe.exe -show_streams -of json -i $inputFile > $outInfo", 'r');
 
     pclose($fp);
+
+    postSlack("新しい投稿\n<{$DIR_URL}preview.php?filenum={$filenum}|{$title}>");
+
   } else {
     echo "ファイルをアップロードできません。";
   }

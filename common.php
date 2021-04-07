@@ -1,5 +1,14 @@
 <?php
 setlocale(LC_CTYPE, 'C');
+//ini_set("display_errors","On");
+//error_reporting(E_ALL);
+
+// Incoming WebhookのURLを書く
+// 空なら投稿しない
+$SLACK_URL = "";
+
+// おいてるとこのURL、外から見えるように スラッシュで終わる
+$DIR_URL = "http://localhost/upld2/";
 
 function parseFileRecordsFromStream($fileindex)
 {
@@ -31,3 +40,27 @@ function getBiggestFilenum($records)
     return $maxidx;
 }
 
+function postSlack($text){
+    global $SLACK_URL, $DIR_URL;
+
+    if($SLACK_URL === ""){
+        return false;
+    }
+
+    $data = array(
+        "text" => $text
+    );
+
+    $context = stream_context_create([
+        'http' => [
+            'method' => 'POST',
+            'header' => 'Content-type: application/json; charset=UTF-8',
+            'content' => json_encode($data),
+            'ignore_errors' => true
+        ]
+    ]);
+    $res = file_get_contents($SLACK_URL, false, $context);
+    echo $res;
+
+    return true;
+}
