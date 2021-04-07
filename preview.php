@@ -5,16 +5,14 @@
 </head>
 <body>
 <p><?php
+setlocale(LC_CTYPE, 'C');
 ini_set("display_errors",On);
 error_reporting(E_ALL);
+
 $filenum=$_GET["filenum"];
-setlocale(LC_CTYPE, 'C');
-$fileindex = fopen("fileindex.txt", "r");
-if( $fileindex ){
-  while( !feof($fileindex) ){
-     $records[]=fgetcsv($fileindex);
-  }
-}
+
+require_once('common.php');
+$records = loadFileRecords();
 
 $i=0;
 
@@ -23,15 +21,14 @@ for(;$i<sizeof($records);$i++){
         break;
     }
 }
-fclose($fileindex);
 
 $name=$records[$i][2];
 
-$json=json_decode(file_get_contents("files\\{$records[$i][1]}.json"),true);
+$json=json_decode(file_get_contents("files\\{$records[$i][0]}.json"),true);
 
 echo "<h1>{$name}</h1>";
-echo "<audio id='play' src='files/{$filenum}.mp3' controls></audio>";
-echo "<div id='wave' style='background:url(\"files/{$filenum}.wav.png\");width:800px;height:256px;border:solid 2px black'>";
+echo "<audio id='play' src='files/{$filenum}.m4a' controls></audio>";
+echo "<div id='wave' style='background:url(\"files/{$filenum}.wf2.png\");width:800px;height:256px;border:solid 2px black'>";
 
 ?>
 <div id='progress' style='height:256px;width:1px;background-color:white;opacity:0.5;'></div></div>

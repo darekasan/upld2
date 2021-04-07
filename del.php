@@ -5,15 +5,14 @@
 </head>
 <body>
 <p><?php
-$filenum=$_GET["filenum"];
 setlocale(LC_CTYPE, 'C');
+$filenum=$_GET["filenum"];
+require_once('common.php');
 $fileindex = fopen("fileindex.txt", "a+");
 $logfile = fopen("log.txt", "a+");
-if( $fileindex ){
-  while( !feof($fileindex) ){
-     $records[]=fgetcsv($fileindex);
-  }
-}
+
+
+$records=loadFileRecords($fileindex);
 
 $i=0;
 for($i=0;i<count($records);i++){

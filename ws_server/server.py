@@ -70,6 +70,7 @@ class SyncPlayerServer():
                 'message_kind': 'player_load', \
                 'filenum': self.player_filenum}
             self.send_message_exclude_a_client(client, json.dumps(obj))
+            self.send_text('[SERVER]', self.clients[client['id']]['name'] + 'が' + self.player_filenum + 'をロードしました')
 
             for key in self.clients :
                 self.clients[key]['is_ready']=False
@@ -86,6 +87,11 @@ class SyncPlayerServer():
                 'time': self.player_time,\
                 'is_playing': self.player_is_playing}
             self.send_message_exclude_a_client(client, json.dumps(obj))
+            if self.player_is_playing:
+                self.send_text('[SERVER]', self.clients[client['id']]['name'] + 'によって再生')
+            else:
+                self.send_text('[SERVER]', self.clients[client['id']]['name'] + 'によって一時停止')
+
 
         # 時間を取得（遅れて来た人向け）
         # elif message['message_kind'] in 'get_player_time' :

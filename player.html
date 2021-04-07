@@ -47,7 +47,7 @@
         background-color: black;
     }
 
-    .tbl-author:active{
+    .tbl-author:hover{
         background-color: white;
     }
 
@@ -96,10 +96,13 @@
 <body onload="init()">
     <div>
         <section>
-            <h1><a href="/">upld仮2</a> - 同期再生</h1>
+            <h1><a href="view.php">upld仮2</a> - 同期再生</h1>
+            <a href="#chat">チャット</a>
+            <a href="#player">プレイヤー</a>
+            <a href="#inst">使い方</a>
         </section>
 
-        <section>
+        <section id="chat">
             <h2>チャット</h2>
             <p>
                 
@@ -112,7 +115,7 @@
             </p>
         </section>
 
-        <section>
+        <section id="player">
             <h2>プレイヤー - <span id="title"></span></h2>
             <p>
                 音量:
@@ -122,23 +125,52 @@
                 ←ミュート解除お忘れなく
             </p>
             <p>
-                <video id='play' src='' muted style="display: none"></video>
+                <video id='play' src='' muted style="display: none" playsinline></video>
                 <div id="time"></div>
                 <div id='wave'>
                     <div id='progress' style=''></div>
                 </div>
                 <a href="javascript:playPause(true)">再生</a>
                 <a href="javascript:playPause(false)">一時停止</a>
+                ホールド:
+                <input type="checkbox" checked="checked" onchange="isHold=this.checked">
             </p>
 
             <p id="table-container"></p>
             <a href="javascript:createTable()">ファイル一覧読み込み</a>
         </section>
 
+        <section id="inst">
+            <h2>使い方</h2>
+            <p>
+                このページを開いている他の人と同時に音楽を聴けます。プレイヤー操作は他の参加者全員に反映されるので慎重に！
+            </p>
+
+            <h3>聴く人</h3>
+            <p>
+                <ol>
+                    <li>チャットにお名前を入力(Enterで確定)</li>
+                    <li>ミュートを解除してホストの操作を待つ</li>
+                </ol>
+                シーク操作をしたいときは他の参加者の了承を得た上でホールドを解除して波形をクリックします。<br>
+                ※必要がなければホールドは解除しないこと
+            </p>
+
+            <h3>再生の操作をする（ホスト）</h3>
+            <p>
+                <ol>
+                    <li>ホールドを解除</li>
+                    <li>ファイル一覧読み込みをクリック</li>
+                    <li>再生する曲の番号をクリック</li>
+                    <li>他の参加者の準備ができ次第再生</li>
+                </ol>
+            </p>
+        </section>
+
     </div>
 
     <script>
-        var wsHost = "ws://localhost:9001/";
+        var wsHost = "ws://dsrv2.com:9001/";
         var play = document.getElementById("play");
         var elmLog;
         var elmClients;
@@ -147,26 +179,9 @@
         var elmText;
         var elmName;
         var isCanplay = false;
+        var isHold =true;
 
-        play.addEventListener("timeupdate", function () {
-            var p = document.getElementById("progress");
-            var time = document.getElementById("time");
-            p.style.width = 800 * play.currentTime / play.duration + "px";
-
-            time.innerHTML = secondsToMinutesAndSeconds(play.currentTime) + " / " + secondsToMinutesAndSeconds(play.duration);
-        }, false);
-
-
-        document.getElementById("wave").addEventListener("click", function (event) {
-            var clickX = event.pageX;
-            var clientRect = this.getBoundingClientRect();
-            var positionX = clientRect.left + window.pageXOffset;
-            var x = clickX - positionX;
-            play.currentTime = play.duration * x / 800;
-            socket.send(JSON.stringify({"message_kind" : "player_play_pause", "time" : play.currentTime, "is_playing" : isPlaying}));
-        });
-
-
+        // WebSocketでメッセージを受信したとき
         function onMessage(event) {
             var message = JSON.parse(event.data);
             console.log(message);
@@ -197,6 +212,7 @@
                     });
                     break;
                 case 'player_load':
+                    createTable();
                     load(message['filenum']);
                     break;
                     
@@ -217,8 +233,6 @@
             
         }
 
-
-        
         function init(){
             createTable();
             elmLog = document.getElementById("log");
@@ -252,7 +266,36 @@
             });
         }
 
+        // 時間経過で画面を更新
+        play.addEventListener("timeupdate", function () {
+            var p = document.getElementById("progress");
+            var time = document.getElementById("time");
+            p.style.width = 800 * play.currentTime / play.duration + "px";
+
+            time.innerHTML = secondsToMinutesAndSeconds(play.currentTime) + " / " + secondsToMinutesAndSeconds(play.duration);
+        }, false);
+
+        // 波形を触ったとき
+        document.getElementById("wave").addEventListener("click", function (event) {
+            if(isHold){
+                alert('操作するにはホールドを解除する必要があります');
+                return;
+            }
+            var clickX = event.pageX;
+            var clientRect = this.getBoundingClientRect();
+            var positionX = clientRect.left + window.pageXOffset;
+            var x = clickX - positionX;
+            play.currentTime = play.duration * x / 800;
+            socket.send(JSON.stringify({"message_kind" : "player_play_pause", "time" : play.currentTime, "is_playing" : isPlaying}));
+        });
+
+        // 再生停止ボタン
         function playPause(isplay){
+            if(isHold){
+                alert('操作するにはホールドを解除する必要があります');
+                return;
+            }
+
             isPlaying = isplay;
             socket.send(JSON.stringify({"message_kind" : "player_play_pause", "time" : play.currentTime, "is_playing" : isPlaying}));
             if(isPlaying){
@@ -263,6 +306,17 @@
             }
         }
 
+        // 
+        function clickNum(num){
+            if(isHold){
+                alert('操作するにはホールドを解除する必要があります');
+                return;
+            }
+
+            load(num);
+            socket.send(JSON.stringify({"message_kind" : "player_load", "filenum" : num}));
+        }
+        
         function secondsToMinutesAndSeconds(val) {
 
             var seconds = parseInt(val % 60, 10)
@@ -273,14 +327,10 @@
             return minutes + ":" + seconds;
         }
 
-        function clickNum(num){
-            load(num);
-            socket.send(JSON.stringify({"message_kind" : "player_load", "filenum" : num}));
-        }
 
         function load(num){
-            play.src = 'files/'+num+'.mp3';
-            document.getElementById("wave").style.backgroundImage = 'url("files/' + num + '.wav.png")';
+            play.src = 'files/'+num+'.m4a';
+            document.getElementById("wave").style.backgroundImage = 'url("files/' + num + '.wf2.png")';
             document.getElementById("title").textContent = filelist[num].title;
             isCanplay = false;
         }
@@ -319,7 +369,7 @@
                 tds[0].style.textAlign = 'center'
 
                 tds[1].textContent = filelist[key].title;
-                tds[1].style.backgroundImage = 'url("files/mini' + filelist[key].filenum + '.wav.png")';
+                tds[1].style.backgroundImage = 'url("files/' + filelist[key].filenum + '.wf1.png")';
                 tds[1].classList.add('tbl-title');
 
                 tds[2].textContent = filelist[key].author;

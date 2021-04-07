@@ -7,15 +7,12 @@
 <p><?php
 ini_set("display_errors",On);
 error_reporting(E_ALL);
-$filenums=explode(",",$_GET["filenums"]);
 setlocale(LC_CTYPE, 'C');
-$fileindex = fopen("fileindex.txt", "r");
-if( $fileindex ){
-  while( !feof($fileindex) ){
-     $records[]=fgetcsv($fileindex);
-  }
-}
-fclose($fileindex);
+require_once('common.php');
+$records = loadFileRecords();
+
+$filenums=explode(",",$_GET["filenums"]);
+
 $playlist=array();
 foreach($filenums as $fnum){
     $idx=0;
@@ -26,6 +23,7 @@ foreach($filenums as $fnum){
         }
     }
 }
+
 
 echo "<h1>プレイリスト再生</h1>";
 echo "<p id='title'></p>";
@@ -84,8 +82,8 @@ function secondsToMinutesAndSeconds(val){
 }
 
 function select(idx){
-    wave.style.background="url('files/"+playlist[idx][0]+".wav.png')";
-    play.src="files/"+playlist[idx][0]+".wav";
+    wave.style.background="url('files/"+playlist[idx][0]+".wf2.png')";
+    play.src="files/"+playlist[idx][0]+".m4a";
     play.currentTime=0;
     title.innerText=playlist[idx][3]+" - "+playlist[idx][2];
     currentTrackNum=idx;
@@ -112,7 +110,7 @@ function update(){
 foreach($playlist as $i => $row){
     echo "<tr>
     <td><a href='javascript:select($i)'>$i</a></td>
-    <td background='files/mini{$row[1]}.png'><a href='files/$row[1]' download='[$row[0]]$row[2] - $row[3].wav'>$row[2]</a></td>
+    <td background='files/{$row[0]}.wf1.png'><a href='files/$row[1]' download='$row[2] - $row[3] $row[0]'>$row[2]</a></td>
     <td>{$row[3]}</td>";
 }
 ?>
