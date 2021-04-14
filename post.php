@@ -12,21 +12,29 @@ $name=$_POST["name"];
 
 setlocale(LC_CTYPE, 'C');
 
-$logfile = fopen("log.txt", "a+");
-
-$fileindex = fopen("fileindex.txt", "a+");
-$records=loadFileRecords($fileindex);
-
-$filenum=getBiggestFilenum($records)+1;
-
-
 $date=date("Y-m-d H:i:s");
 if (is_uploaded_file($_FILES["upfile"]["tmp_name"])) {
-  $ext = pathinfo($_FILES["upfile"]["name"], PATHINFO_EXTENSION);
-  $filename = $filenum .".". $ext;
+
+  // クライアントを信用してはだめ、環境次第じゃ拡張子が付かない
+  //$ext = pathinfo($_FILES["upfile"]["name"], PATHINFO_EXTENSION);
+
+  // ffprobeに拡張子をつけてもらう movとかになったりするけど問題ない
+  $path = $_FILES["upfile"]["tmp_name"];
+  exec("ffprobe.exe -show_format -of json -i $path",$out);
+  $ffp = json_decode(implode("\n",$out),true);
+  $ext = explode(",",$ffp["format"]["format_name"])[0];
+
+  $fileindex = fopen("fileindex.txt", "a+");
+  $records=loadFileRecords($fileindex);
+  $filenum=getBiggestFilenum($records)+1;
+
+  // 元ファイルのファイル名
+  $filename = $filenum .".raw.". $ext;
 
   if (move_uploaded_file($_FILES["upfile"]["tmp_name"], "files/$filename")) {
     echo $filename . "をアップロードしました。";
+
+    $logfile = fopen("log.txt", "a+");
     
     fwrite($fileindex,"\n$filenum,$filename,\"$title\",\"$name\",$date,0");
 
@@ -47,6 +55,9 @@ if (is_uploaded_file($_FILES["upfile"]["tmp_name"])) {
 
     postSlack("新しい投稿\n<{$DIR_URL}preview.php?filenum={$filenum}|{$title}>");
 
+    fclose($logfile);
+    fclose($fileindex);
+
   } else {
     echo "ファイルをアップロードできません。";
   }
@@ -54,8 +65,7 @@ if (is_uploaded_file($_FILES["upfile"]["tmp_name"])) {
   echo "ファイルが選択されていません。";
 }
 
-fclose($logfile);
-fclose($fileindex);
+
 
 ?></p>
 <a href="view.php">戻る</a>

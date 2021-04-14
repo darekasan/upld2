@@ -1,14 +1,14 @@
 <?php
 setlocale(LC_CTYPE, 'C');
-//ini_set("display_errors","On");
-//error_reporting(E_ALL);
+ini_set("display_errors","On");
+error_reporting(E_ALL);
 
 // Incoming WebhookのURLを書く
 // 空なら投稿しない
 $SLACK_URL = "";
 
-// おいてるとこのURL、外から見えるように スラッシュで終わる
-$DIR_URL = "http://localhost/upld2/";
+// おいてるとこのURL、外から見えるようにスラッシュで終わる
+$DIR_URL = "";
 
 function parseFileRecordsFromStream($fileindex)
 {
